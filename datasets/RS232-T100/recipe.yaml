@@ -1,0 +1,6 @@
+name: RS232-T100
+TjIn:
+  - src/uart.v
+  - src/u_xmit.v
+  - src/u_rec.v
+TjLoc: ena

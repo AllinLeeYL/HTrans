@@ -1,0 +1,13 @@
+name: AES-T400
+TjFree:
+  - src/TjFree/aes_128.v
+  - src/TjFree/round.v
+  - src/TjFree/table.v
+TjIn:
+  - src/TjIn/top.v
+  - src/TjIn/AM_Transmission.v
+  - src/TjIn/Trojan_Trigger.v
+  - src/TjIn/aes_128.v
+  - src/TjIn/round.v
+  - src/TjIn/table.v
+TjLoc: Tj_Trig

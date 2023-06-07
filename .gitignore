@@ -3,6 +3,18 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# output
+*.out
+*.log
+
+# Media
+*.pdf
+*.png
+*.jpg
+*.zip
+*.tar.gz
+*.tar.gz2
+
 # C extensions
 *.so
 
@@ -127,3 +139,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# VSCode
+.vscode/*
+raw/*
