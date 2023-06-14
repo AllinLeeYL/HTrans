@@ -18,7 +18,9 @@ from __future__ import absolute_import
 from __future__ import print_function
 import sys
 import re
+import networkx as nx
 
+count = 0
 
 class Node(object):
     """ Abstact class for every element in parser """
@@ -54,6 +56,26 @@ class Node(object):
 
         for c in self.children():
             c.show(buf, offset + indent, attrnames, showlineno)
+    
+    def toNetworkX(self):
+        self.nx = nx.DiGraph()
+        globals()['count'] = 0
+        self.__toNetworkX(self.nx, -1)
+        return self.nx
+
+    def __toNetworkX(self, nx: nx.DiGraph, parent: int):
+        cur = globals()['count']
+        globals()['count'] += 1
+        attr = {'lineno':self.lineno, 
+                'kind':self.__class__.__name__}
+        attr['token'] = self.name if attr['kind'] == 'Identifier' else ''
+        attr['rp'] = self.rp if hasattr(self, 'rp') else 1.0
+        attr['ap'] = self.ap if hasattr(self, 'ap') else 1.0
+        nx.add_nodes_from([(cur, attr)])
+        if parent != -1:
+            nx.add_edge(parent, cur)
+        for c in self.children():
+            c.__toNetworkX(nx, cur)
 
     def __eq__(self, other):
         if type(self) != type(other):
@@ -99,7 +121,7 @@ class Node(object):
         self.assign_ap(identifiers)
 
     def cal_ap(self, identifiers:dict, p:float) -> float:
-        ap = 1
+        ap = 1.0
         for c in self.children():
             ap = c.cal_ap(identifiers, p)
         return ap
@@ -263,8 +285,10 @@ class Identifier(Node):
         return 1
     
     def cal_ap(self, identifiers: dict, p: float) -> float:
-        id = self.name
-        if id in identifiers:
+        id = str(self.name)
+        if not isinstance(self.name, str):
+            a = 1
+        if id in identifiers.keys():
             identifiers[id] = p if p < identifiers[id] else identifiers[id]
         else:
             identifiers[id] = p
@@ -272,7 +296,7 @@ class Identifier(Node):
         return self.ap
     
     def assign_ap(self, identifiers: dict) -> None:
-        id = self.name
+        id = str(self.name)
         self.ap = identifiers[id]
 
 
@@ -523,7 +547,7 @@ class Pointer(Node):
         return tuple(nodelist)
     
     def cal_ap(self, identifiers: dict, p: float) -> float:
-        id = self.var
+        id = str(self.var)
         if id in identifiers:
             identifiers[id] = p if p < identifiers[id] else identifiers[id]
         else:
@@ -747,9 +771,9 @@ class NotEq(Operator):
     def cal_ap(self, identifiers: dict, p: float) -> float:
         if hasattr(self, 'ap'):
             return self.ap
-        self.left.cal_ap(identifiers, p)
-        self.right.cal_ap(identifiers, p)
-        self.ap = 1 - min(self.left.ap, self.right.ap)
+        leftap = self.left.cal_ap(identifiers, p)
+        rightap = self.right.cal_ap(identifiers, p)
+        self.ap = 1 - min(leftap, rightap)
         return self.ap
 
 
@@ -775,9 +799,9 @@ class And(Operator):
         self.rp = left_rp * right_rp
         return self.rp
     def cal_ap(self, identifiers: dict, p: float) -> float:
-        self.left.cal_ap(identifiers, p)
-        self.right.cal_ap(identifiers, p)
-        self.ap = self.left.ap * self.right.ap
+        leftap = self.left.cal_ap(identifiers, p)
+        rightap = self.right.cal_ap(identifiers, p)
+        self.ap = leftap * rightap
         return self.ap
 
 
@@ -823,9 +847,9 @@ class Land(Operator):
         self.rp = left_rp * right_rp
         return self.rp
     def cal_ap(self, identifiers: dict, p: float) -> float:
-        self.left.cal_ap(identifiers, p)
-        self.right.cal_ap(identifiers, p)
-        self.ap = self.left.ap * self.right.ap
+        leftap = self.left.cal_ap(identifiers, p)
+        rightap = self.right.cal_ap(identifiers, p)
+        self.ap = leftap * rightap
         return self.ap
 
 
@@ -843,9 +867,9 @@ class Lor(Operator):
         self.rp = left_rp + right_rp - (left_rp * right_rp)
         return self.rp
     def cal_ap(self, identifiers: dict, p: float) -> float:
-        self.left.cal_ap(identifiers, p)
-        self.right.cal_ap(identifiers, p)
-        self.ap = self.left.ap + self.right.ap - (self.left.ap * self.right.ap)
+        leftap = self.left.cal_ap(identifiers, p)
+        rightap = self.right.cal_ap(identifiers, p)
+        self.ap = leftap + rightap - (leftap * rightap)
         return self.ap
 
 
@@ -868,6 +892,10 @@ class Cond(Operator):
         if self.false_value:
             nodelist.append(self.false_value)
         return tuple(nodelist)
+    
+    def cal_ap(self, identifiers: dict, p: float) -> float:
+        self.ap = super().cal_ap(identifiers, p)
+        return self.ap
 
 
 class Assign(Node):
@@ -976,8 +1004,14 @@ class Substitution(Node):
 
 class BlockingSubstitution(Substitution):
     def cal_ap(self, identifiers: dict, p: float) -> float:
-        ap = self.rdelay.cal_ap(identifiers, p)
-        return self.ldelay.cal_ap(identifiers, ap)
+        if self.rdelay:
+            ap = self.rdelay.cal_ap(identifiers, p)
+            return self.ldelay.cal_ap(identifiers, ap)
+        elif self.right:
+            ap = self.right.cal_ap(identifiers, p)
+            return self.left.cal_ap(identifiers, ap)
+        else:
+            raise Exception
 
 
 class NonblockingSubstitution(Substitution):
@@ -1006,9 +1040,11 @@ class IfStatement(Node):
         return tuple(nodelist)
     
     def cal_ap(self, identifiers: dict, p:float) -> float:
-        self.cond.cal_ap(identifiers, p)
-        self.true_statement.cal_ap(identifiers, self.cond.ap * p)
-        self.true_statement.cal_ap(identifiers, (1 - self.cond.ap) * p)
+        ap = self.cond.cal_ap(identifiers, p)
+        if self.true_statement:
+            self.true_statement.cal_ap(identifiers, ap * p)
+        if self.false_statement:
+            self.false_statement.cal_ap(identifiers, (1 - ap) * p)
 
 
 class ForStatement(Node):

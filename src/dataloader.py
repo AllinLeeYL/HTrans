@@ -1,6 +1,16 @@
 import yaml, torch
 import rtlparser, os
 
+class DataLoader:
+    def __init__(self) -> None:
+        self.contents = []
+    def __len__(self) -> int:
+        return len(self.contents)
+    def __getitem__(self, i):
+        return self.contents[i]
+    def append(self, item):
+        self.contents.append(item)
+
 class RecipeLoader:
     "load recipes and do some basic preprocess work"
     def __init__(self, path: str, preprocess: bool=True) -> None:
@@ -28,6 +38,7 @@ class RecipeLoader:
     def processRecipe(self, recipe:dict, dirname:str):
         "relative path -> abspath, combine files into single one"
         fileBaseName = 'combined.v'
+        TjfileBaseName = 'combined_tj.v'
         if 'TjFree' in recipe.keys():
             recipe['TjFree'] = [os.path.join(dirname, file) for file in recipe['TjFree']]
             if self.preprocess:
@@ -37,7 +48,7 @@ class RecipeLoader:
         if 'TjIn' in recipe.keys():
             recipe['TjIn'] = [os.path.join(dirname, file) for file in recipe['TjIn']]
             if self.preprocess:
-                filename = os.path.join(dirname, fileBaseName)
+                filename = os.path.join(dirname, TjfileBaseName)
                 rtlparser.preprocess(recipe['TjIn'], filename)
                 recipe['TjIn'] = [filename]
         return recipe
@@ -55,6 +66,8 @@ class ASTLoader:
         "accept RecipeLoader as input, construct ast from it"
         self.asts = []
         for recipe in recipes:
+            # if 'MEMCTL' not in recipe['name']:
+            #     continue
             if 'TjFree' in recipe.keys():
                 ast = rtlparser.AST(recipe['TjFree'])
                 ast.name = recipe['name']
@@ -68,3 +81,18 @@ class ASTLoader:
                     ast.TjLoc = recipe['TjLoc']
                 self.asts.append(ast)
 
+def divide(astloader: ASTLoader, 
+           devname: str = None,
+           ratio: float = 0.2) -> tuple:
+    "divide ASTLoader into trainset and devset"
+    trainloader = DataLoader()
+    devloader = DataLoader()
+    if devname == None:
+        pass
+    else:
+        for ast in astloader:
+            if devname in ast.name:
+                devloader.append(ast)
+            else:
+                trainloader.append(ast)
+    return (trainloader, devloader)

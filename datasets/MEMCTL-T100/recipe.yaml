@@ -1,0 +1,30 @@
+name: MEMCTL-T100
+TjFree:
+  - rtl/verilog/mc_adr_sel.v
+  - rtl/verilog/mc_cs_rf.v
+  - rtl/verilog/mc_dp.v
+  - rtl/verilog/mc_incn_r.v
+  - rtl/verilog/mc_mem_if.v
+  - rtl/verilog/mc_obct_top.v
+  - rtl/verilog/mc_obct.v
+  - rtl/verilog/mc_rd_fifo.v
+  - rtl/verilog/mc_refresh.v
+  - rtl/verilog/mc_rf.v
+  - rtl/verilog/mc_timing.v
+  - rtl/verilog/mc_top.v
+  - rtl/verilog/mc_wb_if.v
+TjIn:
+  - rtl/verilog_tj_In/mc_adr_sel.v
+  - rtl/verilog_tj_In/mc_cs_rf.v
+  - rtl/verilog_tj_In/mc_dp.v
+  - rtl/verilog_tj_In/mc_incn_r.v
+  - rtl/verilog_tj_In/mc_mem_if.v
+  - rtl/verilog_tj_In/mc_obct_top.v
+  - rtl/verilog_tj_In/mc_obct.v
+  - rtl/verilog_tj_In/mc_rd_fifo.v
+  - rtl/verilog_tj_In/mc_refresh.v
+  - rtl/verilog_tj_In/mc_rf.v
+  - rtl/verilog_tj_In/mc_timing.v
+  - rtl/verilog_tj_In/mc_top.v
+  - rtl/verilog_tj_In/mc_wb_if.v
+TjLoc: csr_tj_val

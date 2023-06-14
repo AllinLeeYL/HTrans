@@ -2,6 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
+parsetab.py
 
 # output
 *.out
@@ -14,6 +15,8 @@ __pycache__/
 *.zip
 *.tar.gz
 *.tar.gz2
+*.rar
+*.rar.1
 
 # C extensions
 *.so
