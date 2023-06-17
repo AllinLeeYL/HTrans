@@ -919,6 +919,25 @@ class Assign(Node):
         if self.rdelay:
             nodelist.append(self.rdelay)
         return tuple(nodelist)
+    
+    def cal_ap(self, identifiers: dict, p: float) -> float:
+        if self.right and self.left:
+            ap = self.right.cal_ap(identifiers, p)
+            self.left.cal_ap(identifiers, ap)
+        elif self.ldelay and self.rdelay:
+            ap = self.rdelay.cal_ap(identifiers, p)
+            self.ldelay.cal_ap(identifiers, ap)
+        elif self.left and self.rdelay:
+            ap = self.rdelay.cal_ap(identifiers, p)
+            self.left.cal_ap(identifiers, ap)
+        elif self.ldelay and self.right:
+            ap = self.right.cal_ap(identifiers, p)
+            self.ldelay.cal_ap(identifiers, ap)
+        else:
+            print(self.children(), 'error')
+            raise Exception
+        return ap
+
 
 
 class Always(Node):
@@ -1131,6 +1150,25 @@ class Case(Node):
         if self.statement:
             nodelist.append(self.statement)
         return tuple(nodelist)
+    
+    def cal_ap(self, identifiers: dict, p:float) -> float:
+        if not self.cond and not self.statement:
+            return p
+        elif not self.cond and self.statement:
+            self.statement.cal_ap(identifiers, p)
+            return p
+        elif self.cond and not self.statement:
+            ap = self.cond.cal_ap(identifiers, p)
+            return ap
+        else:
+            if isinstance(self.cond, tuple):
+                ap = self.cond[0].cal_ap(identifiers, p)
+                self.statement.cal_ap(identifiers, ap * p)
+                return ap
+            else:
+                print(self.cond, 'cannot be recognized')
+                raise Exception
+
 
 
 class Block(Node):

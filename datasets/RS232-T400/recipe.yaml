@@ -1,0 +1,14 @@
+name: RS232-T400
+TjIn:
+  - src/uart.v
+  - src/u_xmit.v
+  - src/u_rec.v
+TjLoc: 
+  - cntr
+  - rec_dataH_temp
+  - rec_dataH_rec
+  - x_START
+  - DataSend_bit
+  - xmit_dataH
+  - x_WAIT
+  - x_SHIFT

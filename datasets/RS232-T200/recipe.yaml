@@ -3,4 +3,11 @@ TjIn:
   - src/uart.v
   - src/u_xmit.v
   - src/u_rec.v
-TjLoc: ena
+TjLoc: 
+  - ena
+  - rec_data_cntrH_1
+  - rec_data_cntrH_2
+  - count_l
+  - bitCell_cntrH
+  - rec_dataH
+  - par_dataH

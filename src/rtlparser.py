@@ -3,6 +3,7 @@ import networkx as nx
 from torch_geometric.utils import from_networkx, to_networkx
 import torch, re, os
 import torch_geometric as pyg
+import numpy as np
 
 def preprocess(files:list, 
                outPath:str):
@@ -28,6 +29,7 @@ def preprocess(files:list,
 
 class AST:
     def __init__(self, verilog_files) -> None:
+        print('processing:', verilog_files[0])
         self.ast, _ = parse(verilog_files)
         self.ast.calculate()
         self.type = None
@@ -50,13 +52,14 @@ class AST:
             return self.nx
         self.kinds = self.DICTIONARY_GEN + self.ARRAY_GEN + self.CONST_DICTIONARY_GEN
         self.nx = self.ast.toNetworkX()
+        maxlineno = np.max([n[1]['lineno'] for n in self.nx.nodes.data()])
         for node in self.nx.nodes.data():
             attr = node[1]
             rp = attr['rp'] if 'rp' in attr.keys() else 1.0
             ap = attr['ap'] if 'ap' in attr.keys() else 1.0
-            node[1]['x'] = torch.tensor([node[0],
-                                         attr['lineno'],
-                                         self.kinds.index(attr['kind']),
+            node[1]['x'] = torch.tensor([node[0] / len(self.nx.nodes.data()),
+                                         attr['lineno'] / maxlineno,
+                                         self.kinds.index(attr['kind']) / len(self.kinds),
                                          rp,
                                          ap],
                                          dtype=torch.float)
@@ -66,5 +69,55 @@ class AST:
             return self.pyg
         self.pyg = pyg.utils.from_networkx(self.toNetworkX())
         return self.pyg
+    # def TjLoc_Feature(self):
+    #     if hasattr(self, 'tjfeature'):
+    #         return self.tjfeature
+    #     if not hasattr(self, 'nx'):
+    #         self.toNetworkX()
+    #     count = 0
+    #     for node in self.nx.nodes.data():
+    #         attr = node[1]
+    #         for token in self.TjLoc:
+    #             if attr['token'] == token:
+    #                 count += 1
+    #                 if hasattr(self, 'tjfeature'):
+    #                     self.tjfeature += node[1]['x']
+    #                 else:
+    #                     self.tjfeature = node[1]['x']
+    #                 break
+    #     if count >= len(self.TjLoc):
+    #         self.tjfeature = self.tjfeature / count
+    #         self.tjfeature = torch.reshape(self.tjfeature, (1, 5))
+    #         return self.tjfeature
+    #     else:
+    #         print(self.name, 'has not identifier', self.TjLoc)
+    #         raise Exception
+    def TjLoc_Feature(self):
+        if hasattr(self, 'tjfeature'):
+            return self.tjfeature
+        if not hasattr(self, 'nx'):
+            self.toNetworkX()
+        count = 0
+        for node in self.nx.nodes.data():
+            attr = node[1]
+            if attr['token'] == self.TjLoc[0]:
+                self.tjfeature = node[1]['x']
+                self.tjfeature = torch.reshape(self.tjfeature, (1, 5))
+                return self.tjfeature
+        print(self.name, 'has not identifier', self.TjLoc)
+        raise Exception
+    def find_k_nearest(self, pred, lossfunc, k=5):
+        nodes = []
+        for node in self.nx.nodes.data():
+            attr = node[1]
+            if attr['x'][4] > 0.2 or attr['kind'] != 'Identifier':
+                continue
+            loss = float(lossfunc(pred, torch.reshape(attr['x'], (1, 5))))
+            if len(nodes) < k and attr['token'] not in [node[0][1]['token'] for node in nodes]:
+                nodes.append([node, loss])
+            elif loss < np.max([n[1] for n in nodes]) and attr['token'] not in [node[0][1]['token'] for node in nodes]:
+                nodes[-1] = [node, loss]
+            nodes.sort(key=lambda a: a[1], reverse=False)
+        return [node[0] for node in nodes]
     def show(self):
         self.ast.show()

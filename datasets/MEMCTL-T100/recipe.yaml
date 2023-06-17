@@ -27,4 +27,7 @@ TjIn:
   - rtl/verilog_tj_In/mc_timing.v
   - rtl/verilog_tj_In/mc_top.v
   - rtl/verilog_tj_In/mc_wb_if.v
-TjLoc: csr_tj_val
+TjLoc: 
+  - csr_tj_val
+  - csr_tj
+  - fs

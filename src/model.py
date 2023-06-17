@@ -2,7 +2,7 @@ import torch
 import torch_geometric as pyg
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import GCNConv, SAGPooling, TopKPooling
+from torch_geometric.nn import GCNConv, SAGPooling, TopKPooling, GATConv
 
 class GCNLayer(nn.Module):
     def __init__(self, 
@@ -11,9 +11,9 @@ class GCNLayer(nn.Module):
                  odim: int = 200, 
                  olen: int = 512) -> None:
         super(GCNLayer, self).__init__()
-        self.layers = [GCNConv(idim, hdim),
-                       GCNConv(hdim, hdim),
-                       GCNConv(hdim, odim)]
+        self.layers = [GATConv(idim, hdim),
+                       GATConv(hdim, hdim),
+                       GATConv(hdim, odim)]
         self.pooling = SAGPooling(200, 0.5)
 
     def forward(self, data: pyg.data.Data):
@@ -40,16 +40,18 @@ class TransformerLayer(nn.Module):
         return inp
 
 class HJ_Model(nn.Module):
+    "Model to judge if a design is trojan-inserted"
     def __init__(self, 
                  idim: int, 
-                 nhead: int = 2) -> None:
+                 nhead: int = 2,
+                 odim: int = 2) -> None:
         super(HJ_Model, self).__init__()
         self.gcnlayer = GCNLayer(idim)
         self.transformerlayer = TransformerLayer(200, nhead)
         self.outputlayer = nn.Sequential(
             nn.Linear(200 * 512, 16),
             nn.ReLU(),
-            nn.Linear(16, 2)
+            nn.Linear(16, odim)
         )
     
     def forward(self, inp):
@@ -60,20 +62,23 @@ class HJ_Model(nn.Module):
         return out
 
 class HJ_LocModel(nn.Module):
+    "Model to locate the trojan signal of a trojan-inserted design"
     def __init__(self, 
                  idim: int, 
-                 nhead: int = 2) -> None:
+                 nhead: int = 2,
+                 odim: int = 5) -> None:
         super(HJ_LocModel, self).__init__()
         self.gcnlayer = GCNLayer(idim)
         self.transformerlayer = TransformerLayer(200, nhead)
         self.outputlayer = nn.Sequential(
-            nn.Linear(idim, 8),
+            nn.Linear(200 * 512, 16),
             nn.ReLU(),
-            nn.Linear(8, 2)
+            nn.Linear(16, odim)
         )
     
     def forward(self, inp):
-        inp = self.gcnlayer(inp.x, inp.edge_index)
+        inp = self.gcnlayer(inp)
         inp = self.transformerlayer(inp)
+        inp = torch.reshape(inp, (1, 200 * 512))
         out = self.outputlayer(inp)
         return out

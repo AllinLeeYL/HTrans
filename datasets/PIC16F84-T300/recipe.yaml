@@ -1,0 +1,11 @@
+name: PIC16F84-T300
+TjFree:
+  - src/TjFree/risc16f84.v
+TjIn:
+  - src/TjIn/risc16f84.v
+TjLoc: 
+  - Trojan_Trigger_Out
+  - prog_dat_i
+  - Counter
+  - eep_dat_reg
+  - aluout_reg

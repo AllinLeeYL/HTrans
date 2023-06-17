@@ -1,0 +1,9 @@
+name: PIC16F84-T100
+TjFree:
+  - src/TjFree/risc16f84.v
+TjIn:
+  - src/TjIn/risc16f84.v
+TjLoc: 
+  - prog_adr_o
+  - Counter
+  - pc_reg

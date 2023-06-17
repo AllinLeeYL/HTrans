@@ -1,0 +1,25 @@
+name: WB_CONMAX-T300
+TjFree:
+  - src/TjFree/wb_conmax_arb.v
+  - src/TjFree/wb_conmax_master_if.v
+  - src/TjFree/wb_conmax_msel.v
+  - src/TjFree/wb_conmax_pri_dec.v
+  - src/TjFree/wb_conmax_pri_enc.v
+  - src/TjFree/wb_conmax_rf.v
+  - src/TjFree/wb_conmax_slave_if.v
+  - src/TjFree/wb_conmax_top.v
+TjIn:
+  - src/TjIn/wb_conmax_arb.v
+  - src/TjIn/wb_conmax_master_if.v
+  - src/TjIn/wb_conmax_msel.v
+  - src/TjIn/wb_conmax_pri_dec.v
+  - src/TjIn/wb_conmax_pri_enc.v
+  - src/TjIn/wb_conmax_rf.v
+  - src/TjIn/wb_conmax_slave_if.v
+  - src/TjIn/wb_conmax_top.v
+TjLoc: 
+  - slv_sel
+  - wb_data_i
+  - wb_addr_i
+  - wb_data_o
+  - s0_data_i

@@ -11,4 +11,8 @@ TjIn:
   - src/TjIn/aes_128.v
   - src/TjIn/round.v
   - src/TjIn/table.v
-TjLoc: Tj_Trig
+TjLoc: 
+  - Tj_Trig
+  - Counter
+  - lfsr_stream
+  - d0

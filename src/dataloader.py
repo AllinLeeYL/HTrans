@@ -55,8 +55,9 @@ class RecipeLoader:
     
 class ASTLoader:
     "parse verilog code into AST"
-    def __init__(self, recipes: RecipeLoader) -> None:
+    def __init__(self, recipes: RecipeLoader, TjInOnly: bool=False) -> None:
         self.recipes = recipes
+        self.TjInOnly = TjInOnly
         self.recipe2ast(recipes)
     def __getitem__(self, i:int):
         return self.asts[i]
@@ -66,9 +67,9 @@ class ASTLoader:
         "accept RecipeLoader as input, construct ast from it"
         self.asts = []
         for recipe in recipes:
-            # if 'MEMCTL' not in recipe['name']:
+            # if 'WB_CONMAX' not in recipe['name']:
             #     continue
-            if 'TjFree' in recipe.keys():
+            if 'TjFree' in recipe.keys() and not self.TjInOnly:
                 ast = rtlparser.AST(recipe['TjFree'])
                 ast.name = recipe['name']
                 ast.label = 'TjFree'
